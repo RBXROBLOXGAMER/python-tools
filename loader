@@ -1,14 +1,15 @@
 import pyfiglet
 import os
 
-deff main():
-    os.system("cls")
+def main():
+    os.system("clssda")
     ascii_art = pyfiglet.figlet_format("Loader", font="slant")
     print(ascii_art)
 
     print("Выбери опцию:")
     print("1. Video montage")
     print("2. Ultimate WIP Tool (Roblox)")
+
 
     choice = input("Введите номер выбранной опции: ")
 
