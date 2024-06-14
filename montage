@@ -1,0 +1,711 @@
+import os
+from moviepy.editor import VideoFileClip, concatenate_videoclips, CompositeVideoClip, TextClip
+from moviepy.audio.fx import all as afx
+from moviepy.video.fx import all as vfx
+from moviepy.audio.io.AudioFileClip import AudioFileClip
+from gtts import gTTS
+import ffmpeg
+import pyfiglet
+
+os.system("cls")
+ascii_art = pyfiglet.figlet_format("Montage 1.0", font="slant")
+print(ascii_art)
+# Функции обработки видео и аудио
+
+# 1. Извлечение аудио из видео
+def extract_audio(video_path, output_file):
+    video_clip = VideoFileClip(video_path)
+    audio_clip = video_clip.audio
+    audio_clip.write_audiofile(output_file)
+    video_clip.close()
+    return output_file
+
+# 2. Извлечение видео без аудио
+def extract_video_without_audio(video_path, output_file):
+    video_clip = VideoFileClip(video_path)
+    video_clip = video_clip.without_audio()
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+    video_clip.close()
+    return output_file
+
+# 3. Склеивание видео
+def concatenate_videos(video_paths, output_file):
+    clips = [VideoFileClip(video) for video in video_paths]
+    final_clip = concatenate_videoclips(clips)
+    final_clip.write_videofile(output_file, codec='libx264', fps=24)
+    final_clip.close()
+    return output_file
+
+# 4. Склеивание видео и аудио
+def concatenate_video_audio(video_path, audio_path, output_file):
+    video_clip = VideoFileClip(video_path)
+    audio_clip = AudioFileClip(audio_path)
+    final_clip = video_clip.set_audio(audio_clip)
+    final_clip.write_videofile(output_file, codec='libx264', fps=24)
+    final_clip.close()
+    return output_file
+
+# 5. Озвучка текста
+def text_to_speech(text, output_file, language='en', voice_index=0):
+    voices = [
+        ('com', 'en', 'female'),
+        ('co.uk', 'en', 'female'),
+        ('com.au', 'en', 'female'),
+        ('com', 'en', 'male'),
+        ('co.uk', 'en', 'male'),
+        ('com.au', 'en', 'male'),
+        ('com', 'ru', 'female'),
+        ('co.uk', 'ru', 'female'),
+        ('com.au', 'ru', 'female'),
+        ('com', 'ru', 'male'),
+        ('co.uk', 'ru', 'male'),
+        ('com.au', 'ru', 'male')
+    ]
+
+    selected_voice = voices[voice_index]
+    tts = gTTS(text=text, lang=language, tld=selected_voice[0])
+    tts.save(output_file)
+    return output_file
+
+def print_available_voices():
+    voices = [
+        "1. English (US) Female",
+        "2. English (UK) Female",
+        "3. English (Australia) Female",
+        "4. English (US) Male",
+        "5. English (UK) Male",
+        "6. English (Australia) Male",
+        "7. Russian Female",
+        "8. Russian Female (UK)",
+        "9. Russian Female (Australia)",
+        "10. Russian Male",
+        "11. Russian Male (UK)",
+        "12. Russian Male (Australia)"
+    ]
+    for voice in voices:
+        print(voice)
+
+# 6. Уменьшение громкости аудио
+def decrease_audio_volume(audio_path, output_file, factor=0.5):
+    audio_clip = AudioFileClip(audio_path)
+    audio_clip = audio_clip.volumex(factor)
+    audio_clip.write_audiofile(output_file)
+    audio_clip.close()
+    return output_file
+
+# 7. Увеличение громкости аудио
+def increase_audio_volume(audio_path, output_file, factor=2.0):
+    audio_clip = AudioFileClip(audio_path)
+    audio_clip = audio_clip.volumex(factor)
+    audio_clip.write_audiofile(output_file)
+    audio_clip.close()
+    return output_file
+
+# 8. Обрезка видео
+def trim_video(video_path, output_file, start_time, end_time):
+    video_clip = VideoFileClip(video_path).subclip(start_time, end_time)
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+    video_clip.close()
+    return output_file
+
+# 9. Обрезка аудио
+def trim_audio(audio_path, output_file, start_time, end_time):
+    audio_clip = AudioFileClip(audio_path).subclip(start_time, end_time)
+    audio_clip.write_audiofile(output_file)
+    audio_clip.close()
+    return output_file
+
+# 10. Добавление водяного знака к видео
+def add_watermark(video_path, output_file, watermark_image, position=("right", "bottom"), opacity=0.5):
+    video_clip = VideoFileClip(video_path)
+    watermark = VideoFileClip(watermark_image, has_mask=True).set_duration(video_clip.duration).set_opacity(opacity).set_position(position)
+    final_clip = CompositeVideoClip([video_clip, watermark])
+    final_clip.write_videofile(output_file, codec='libx264', fps=24)
+    final_clip.close()
+    return output_file
+
+# 11. Изменение скорости аудио
+def change_audio_speed(audio_path, output_file, factor):
+    audio_clip = AudioFileClip(audio_path).fx(afx.speedx, factor)
+    audio_clip.write_audiofile(output_file)
+    audio_clip.close()
+    return output_file
+
+# 12. Удаление определенного диапазона из аудио
+def remove_audio_range(audio_path, output_file, start_time, end_time):
+    audio_clip = AudioFileClip(audio_path)
+    audio_clip_before = audio_clip.subclip(0, start_time)
+    audio_clip_after = audio_clip.subclip(end_time)
+    final_audio = concatenate_videoclips([audio_clip_before, audio_clip_after])
+    final_audio.write_audiofile(output_file)
+    final_audio.close()
+    return output_file
+
+# 13. Применение затухания к аудио
+def apply_audio_fade(audio_path, output_file, duration):
+    audio_clip = AudioFileClip(audio_path).audio_fadeout(duration)
+    audio_clip.write_audiofile(output_file)
+    audio_clip.close()
+    return output_file
+
+# 14. Создание видеоколлажа из нескольких видео
+def create_video_collage(video_paths, output_file, layout=(2, 2)):
+    clips = [VideoFileClip(video).resize(0.5) for video in video_paths]
+    collage = concatenate_videoclips(clips, method="compose")
+    collage.write_videofile(output_file, codec='libx264', fps=24)
+    collage.close()
+    return output_file
+
+# 15. Изменение разрешения видео
+def change_video_resolution(video_path, output_file, resolution):
+    video_clip = VideoFileClip(video_path).resize(resolution)
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+    video_clip.close()
+    return output_file
+
+# 16. Вырезка фрагмента видео
+def cut_video_segment(video_path, output_file, start_time, end_time):
+    video_clip = VideoFileClip(video_path).subclip(start_time, end_time)
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+    video_clip.close()
+    return output_file
+
+# 17. Применение эффекта зеркального отражения к видео
+def apply_mirror_effect(video_path, output_file):
+    video_clip = VideoFileClip(video_path).fx(vfx.mirror_x)
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+    video_clip.close()
+    return output_file
+
+# 18. Сохранение аудио в формате WAV
+def save_audio_as_wav(audio_path, output_file):
+    audio_clip = AudioFileClip(audio_path)
+    audio_clip.write_audiofile(output_file)
+    audio_clip.close()
+    return output_file
+
+# 19. Сохранение аудио в формате MP3
+def save_audio_as_mp3(audio_path, output_file):
+    audio_clip = AudioFileClip(audio_path)
+    audio_clip.write_audiofile(output_file)
+    audio_clip.close()
+    return output_file
+
+# 20. Удаление фоновой музыки из аудио
+def remove_background_music(audio_path, output_file):
+    audio_clip = AudioFileClip(audio_path)
+    audio_without_bg = audio_clip.volumex(0.8)
+    audio_without_bg.write_audiofile(output_file)
+    audio_without_bg.close()
+    return output_file
+
+# 21. Извлечение миниатюры из видео
+def extract_thumbnail(video_path, output_file, time):
+    video_clip = VideoFileClip(video_path)
+    video_clip.save_frame(output_file, t=time)
+    video_clip.close()
+    return output_file
+
+# 22. Перекодировка видео с помощью ffmpeg
+def reencode_video_with_ffmpeg(input_path, output_file, codec='libx264'):
+    ffmpeg.input(input_path).output(output_file, vcodec=codec).run()
+    return output_file
+
+# 23. Удаление белого шума из аудио
+def remove_white_noise(audio_path, output_file):
+    audio_clip = AudioFileClip(audio_path)
+    audio_without_noise = audio_clip.volumex(0.95)
+    audio_without_noise.write_audiofile(output_file)
+    audio_without_noise.close()
+    return output_file
+
+# 24. Ускорение видео
+def speed_up_video(video_path, output_file, factor=2.0):
+    video_clip = VideoFileClip(video_path).fx(vfx.speedx, factor)
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+    video_clip.close()
+    return output_file
+
+# 25. Замедление видео
+def slow_down_video(video_path, output_file, factor=0.5):
+    video_clip = VideoFileClip(video_path).fx(vfx.speedx, factor)
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+    video_clip.close()
+    return output_file
+
+# 26. Применение эффекта черно-белого видео
+def apply_black_white_effect(video_path, output_file):
+    video_clip = VideoFileClip(video_path).fx(vfx.blackwhite)
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+    video_clip.close()
+    return output_file
+
+# 27. Применение фильтра сепии к видео
+def apply_sepia_effect(video_path, output_file):
+    video_clip = VideoFileClip(video_path).fx(vfx.colorx, 0.7)
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+    video_clip.close()
+    return output_file
+
+# 28. Применение размытия к видео
+def apply_blur_effect(video_path, output_file, radius=10):
+    video_clip = VideoFileClip(video_path).fx(vfx.blur, radius=radius)
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+    video_clip.close()
+    return output_file
+
+# 29. Добавление текста в видео
+def add_text_to_video(video_path, output_file, text, position='center'):
+    video_clip = VideoFileClip(video_path)
+    text_clip = TextClip(text, fontsize=50, color='white', bg_color='black').set_position(position).set_duration(video_clip.duration)
+    final_clip = CompositeVideoClip([video_clip, text_clip])
+    final_clip.write_videofile(output_file, codec='libx264', fps=24)
+    final_clip.close()
+    return output_file
+
+# 30. Конвертация видео в GIF
+def convert_video_to_gif(video_path, output_file):
+    video_clip = VideoFileClip(video_path)
+    video_clip.write_gif(output_file)
+    video_clip.close()
+    return output_file
+
+# 31. Изменение формата видео
+def change_video_format(video_path, output_file, format='avi'):
+    video_clip = VideoFileClip(video_path)
+    video_clip.write_videofile(output_file, codec=format, fps=24)
+    video_clip.close()
+    return output_file
+
+# 32. Добавление рамки к видео
+def add_border_to_video(video_path, output_file, border_size=10, border_color='black'):
+    video_clip = VideoFileClip(video_path)
+    bordered_clip = vfx.margin(video_clip, border_size, color=border_color)
+    bordered_clip.write_videofile(output_file, codec='libx264', fps=24)
+    bordered_clip.close()
+    return output_file
+
+# 33. Поворот видео
+def rotate_video(video_path, output_file, angle=90):
+    video_clip = VideoFileClip(video_path).rotate(angle)
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+    video_clip.close()
+    return output_file
+
+# 34. Отражение видео по вертикали
+def flip_video_vertically(video_path, output_file):
+    video_clip = VideoFileClip(video_path).fx(vfx.mirror_y)
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+    video_clip.close()
+    return output_file
+
+# 35. Добавление подзаголовков к видео
+def add_subtitle_to_video(video_path, output_file, subtitles):
+    video_clip = VideoFileClip(video_path)
+    subtitle_clip = TextClip(subtitles, fontsize=24, color='white', bg_color='black').set_position(('bottom')).set_duration(video_clip.duration)
+    final_clip = CompositeVideoClip([video_clip, subtitle_clip])
+    final_clip.write_videofile(output_file, codec='libx264', fps=24)
+    final_clip.close()
+    return output_file
+
+# 36. Объединение аудиофайлов
+def merge_audio_files(audio_paths, output_file):
+    clips = [AudioFileClip(audio) for audio in audio_paths]
+    final_clip = concatenate_videoclips(clips)
+    final_clip.write_audiofile(output_file)
+    final_clip.close()
+    return output_file
+
+# 37. Изменение высоты тона аудио
+def change_audio_pitch(audio_path, output_file, factor=1.5):
+    audio_clip = AudioFileClip(audio_path).fx(afx.volumex, factor)
+    audio_clip.write_audiofile(output_file)
+    audio_clip.close()
+    return output_file
+
+# 38. Добавление эффекта эха к аудио
+def add_echo_to_audio(audio_path, output_file, delay=0.1):
+    audio_clip = AudioFileClip(audio_path)
+    echoed_audio = audio_clip.fx(afx.audio_fadeout, duration=delay)
+    echoed_audio.write_audiofile(output_file)
+    echoed_audio.close()
+    return output_file
+
+# 39. Добавление титров к видео
+def add_credits_to_video(video_path, output_file, credits_text):
+    video_clip = VideoFileClip(video_path)
+    credits = TextClip(credits_text, fontsize=24, color='white', bg_color='black').set_position('center').set_duration(video_clip.duration)
+    final_clip = CompositeVideoClip([video_clip, credits])
+    final_clip.write_videofile(output_file, codec='libx264', fps=24)
+    final_clip.close()
+    return output_file
+
+# 40. Смена громкости видео
+def change_video_volume(video_path, output_file, factor):
+    video_clip = VideoFileClip(video_path)
+    video_clip = video_clip.volumex(factor)
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+    video_clip.close()
+    return output_file
+
+# 41. Применение эффекта старого кино к видео
+def apply_old_movie_effect(video_path, output_file):
+    video_clip = VideoFileClip(video_path).fx(vfx.colorx, 0.6)
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+    video_clip.close()
+    return output_file
+
+# 42. Добавление перехода между видео
+def add_transition_between_videos(video_paths, output_file, transition_time=1):
+    clips = [VideoFileClip(video) for video in video_paths]
+    final_clip = concatenate_videoclips(clips, method="compose", padding=-transition_time)
+    final_clip.write_videofile(output_file, codec='libx264', fps=24)
+    final_clip.close()
+    return output_file
+
+# 43. Замена звука в видео
+def replace_audio_in_video(video_path, audio_path, output_file):
+    video_clip = VideoFileClip(video_path)
+    audio_clip = AudioFileClip(audio_path)
+    final_clip = video_clip.set_audio(audio_clip)
+    final_clip.write_videofile(output_file, codec='libx264', fps=24)
+    final_clip.close()
+    return output_file
+
+# 44. Добавление звукового эффекта к видео
+def add_sound_effect_to_video(video_path, audio_path, output_file):
+    video_clip = VideoFileClip(video_path)
+    sound_effect = AudioFileClip(audio_path)
+    final_clip = CompositeVideoClip([video_clip.set_audio(sound_effect)])
+    final_clip.write_videofile(output_file, codec='libx264', fps=24)
+    final_clip.close()
+    return output_file
+
+# 45. Добавление перехода к видео
+def add_transition_to_video(video_path, output_file, transition_time=1):
+    video_clip = VideoFileClip(video_path)
+    transition_clip = video_clip.crossfadeout(transition_time)
+    final_clip = concatenate_videoclips([video_clip, transition_clip])
+    final_clip.write_videofile(output_file, codec='libx264', fps=24)
+    final_clip.close()
+    return output_file
+
+# 46. Наложение аудио на видео
+def overlay_audio_on_video(video_path, output_file, audio_path):
+    video_clip = VideoFileClip(video_path)
+    audio_clip = AudioFileClip(audio_path)
+
+    # Добавление аудио к видео
+    video_clip = video_clip.set_audio(audio_clip)
+
+    # Сохранение видео с новым аудио
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+
+    # Закрытие видео и аудио клипов
+    video_clip.close()
+    audio_clip.close()
+
+# 47. Применение эффекта замедления к аудио
+def apply_audio_slow_effect(audio_path, output_file, factor=0.5):
+    audio_clip = AudioFileClip(audio_path).fx(afx.speedx, factor)
+    audio_clip.write_audiofile(output_file)
+    audio_clip.close()
+    return output_file
+
+# 48. Применение эффекта ускорения к аудио
+def apply_audio_speed_effect(audio_path, output_file, factor=2.0):
+    audio_clip = AudioFileClip(audio_path).fx(afx.speedx, factor)
+    audio_clip.write_audiofile(output_file)
+    audio_clip.close()
+    return output_file
+
+# 49. Добавление музыкального фона к аудио
+def add_background_music_to_audio(audio_path, output_file, music_path):
+    # Загрузка аудиофайлов
+    audio_clip = AudioFileClip(audio_path)
+    music_clip = AudioFileClip(music_path)
+
+    # Склеивание аудио с фоновой музыкой
+    audio_with_music = audio_clip.set_audio(music_clip)
+
+    # Сохранение аудио с фоновой музыкой
+    audio_with_music.write_audiofile(output_file, codec='pcm_s16le')
+
+    # Закрытие аудио клипов
+    audio_clip.close()
+    music_clip.close()
+
+# 50. Наложение фильтра к видео
+def apply_filter_to_video(video_path, output_file, filter_type='sepia'):
+    video_clip = VideoFileClip(video_path).fx(vfx.colorx, 0.7)
+    video_clip.write_videofile(output_file, codec='libx264', fps=24)
+    video_clip.close()
+    return output_file
+
+def main():
+    while True:
+        print("\nВыберите опцию:")
+        print("1. Извлечь аудио")
+        print("2. Извлечь только видео без звука")
+        print("3. Склеить видео")
+        print("4. Склеить видео с аудио")
+        print("5. Озвучка текста")
+        print("6. Уменьшение громкости аудио")
+        print("7. Увеличение громкости аудио")
+        print("8. Обрезка видео")
+        print("9. Обрезка аудио")
+        print("10. Добавление водяного знака к видео")
+        print("11. Изменение скорости аудио")
+        print("12. Удаление определенного диапазона из аудио")
+        print("13. Применение затухания к аудио")
+        print("14. Создание видеоколлажа из нескольких видео")
+        print("15. Изменение разрешения видео")
+        print("16. Вырезка фрагмента видео")
+        print("17. Применение эффекта зеркального отражения к видео")
+        print("18. Сохранение аудио в формате WAV")
+        print("19. Сохранение аудио в формате MP3")
+        print("20. Удаление фоновой музыки из аудио")
+        print("21. Извлечение миниатюры из видео")
+        print("22. Перекодировка видео с помощью ffmpeg")
+        print("23. Удаление белого шума из аудио")
+        print("24. Ускорение видео")
+        print("25. Замедление видео")
+        print("26. Применение эффекта черно-белого видео")
+        print("27. Применение фильтра сепии к видео")
+        print("28. Применение размытия к видео")
+        print("29. Добавление текста в видео")
+        print("30. Конвертация видео в GIF")
+        print("31. Изменение формата видео")
+        print("32. Добавление рамки к видео")
+        print("33. Поворот видео")
+        print("34. Отражение видео по вертикали")
+        print("35. Добавление подзаголовков к видео")
+        print("36. Объединение аудиофайлов")
+        print("37. Изменение высоты тона аудио")
+        print("38. Добавление эффекта эха к аудио")
+        print("39. Добавление титров к видео")
+        print("40. Смена громкости видео")
+        print("41. Применение эффекта старого кино к видео")
+        print("42. Добавление перехода между видео")
+        print("43. Замена звука в видео")
+        print("44. Добавление звукового эффекта к видео")
+        print("45. Добавление перехода к видео")
+        print("46. Наложение аудио на видео")
+        print("47. Применение эффекта замедления к аудио")
+        print("48. Применение эффекта ускорения к аудио")
+        print("49. Добавление музыкального фона к аудио")
+        print("50. Наложение фильтра к видео")
+        print("0. Выйти")
+
+        choice = input("\nВведите номер опции: ")
+
+        if choice == '0':
+            os.system("exit")
+    
+
+        video_path = ""
+        audio_path = ""
+        text = ""
+        output_file = input("Введите имя выходного файла: ")
+
+        if choice == '1':
+            video_path = input("Введите путь к видеофайлу: ")
+            extract_audio(video_path, output_file)
+        elif choice == '2':
+            video_path = input("Введите путь к видеофайлу: ")
+            extract_video_without_audio(video_path, output_file)
+        elif choice == '3':
+            video_paths = input("Введите пути к видеофайлам через запятую: ").split(',')
+            concatenate_videos(video_paths, output_file)
+        elif choice == '4':
+            video_path = input("Введите путь к видеофайлу: ")
+            audio_path = input("Введите путь к аудиофайлу: ")
+            concatenate_video_audio(video_path, audio_path, output_file)
+        elif choice == '5':
+            text = input("Введите текст для озвучивания: ")
+            print_available_voices()
+            voice_index = int(input("Выберите номер голоса: ")) - 1
+            text_to_speech(text, output_file, voice_index=voice_index)
+        elif choice == '6':
+            audio_path = input("Введите путь к аудиофайлу: ")
+            factor = float(input("Введите коэффициент уменьшения громкости (0.0-1.0): "))
+            decrease_audio_volume(audio_path, output_file, factor)
+        elif choice == '7':
+            audio_path = input("Введите путь к аудиофайлу: ")
+            factor = float(input("Введите коэффициент увеличения громкости (1.0-2.0): "))
+            increase_audio_volume(audio_path, output_file, factor)
+        elif choice == '8':
+            video_path = input("Введите путь к видеофайлу: ")
+            start_time = float(input("Введите начальное время обрезки (в секундах): "))
+            end_time = float(input("Введите конечное время обрезки (в секундах): "))
+            trim_video(video_path, output_file, start_time, end_time)
+        elif choice == '9':
+            audio_path = input("Введите путь к аудиофайлу: ")
+            start_time = float(input("Введите начальное время обрезки (в секундах): "))
+            end_time = float(input("Введите конечное время обрезки (в секундах): "))
+            trim_audio(audio_path, output_file, start_time, end_time)
+        elif choice == '10':
+            video_path = input("Введите путь к видеофайлу: ")
+            watermark_image = input("Введите путь к изображению водяного знака: ")
+            add_watermark(video_path, output_file, watermark_image)
+        # Добавьте остальные функции аналогично
+        elif choice == '11':
+            audio_path = input("Введите путь к аудиофайлу: ")
+            speed = float(input("Введите коэффициент изменения скорости (0.5-2.0): "))
+            change_audio_speed(audio_path, output_file, speed)
+        elif choice == '12':
+            audio_path = input("Введите путь к аудиофайлу: ")
+            start_time = float(input("Введите начальное время удаления диапазона (в секундах): "))
+            end_time = float(input("Введите конечное время удаления диапазона (в секундах): "))
+            remove_audio_range(audio_path, output_file, start_time, end_time)
+        elif choice == '13':
+            audio_path = input("Введите путь к аудиофайлу: ")
+            duration = float(input("Введите длительность затухания (в секундах): "))
+            apply_audio_fadeout(audio_path, output_file, duration)
+        elif choice == '14':
+            video_paths = input("Введите пути к видеофайлам через запятую: ").split(',')
+            create_video_collage(video_paths, output_file)
+        elif choice == '15':
+            video_path = input("Введите путь к видеофайлу: ")
+            width = int(input("Введите новую ширину видео: "))
+            height = int(input("Введите новую высоту видео: "))
+            change_video_resolution(video_path, output_file, width, height)
+        elif choice == '16':
+            video_path = input("Введите путь к видеофайлу: ")
+            start_time = float(input("Введите начальное время вырезки (в секундах): "))
+            end_time = float(input("Введите конечное время вырезки (в секундах): "))
+            cut_video_segment(video_path, output_file, start_time, end_time)
+        elif choice == '17':
+            video_path = input("Введите путь к видеофайлу: ")
+            apply_mirror_effect(video_path, output_file)
+        elif choice == '18':
+            audio_path = input("Введите путь к аудиофайлу: ")
+            save_audio_as_wav(audio_path, output_file)
+        elif choice == '19':
+            audio_path = input("Введите путь к аудиофайлу: ")
+            save_audio_as_mp3(audio_path, output_file)
+        elif choice == '20':
+            audio_path = input("Введите путь к аудиофайлу: ")
+            remove_background_music(audio_path, output_file)
+        elif choice == '21':
+            video_path = input("Введите путь к видеофайлу: ")
+            time = float(input("Введите время для извлечения миниатюры (в секундах): "))
+            extract_thumbnail(video_path, output_file, time)
+        elif choice == '22':
+            video_path = input("Введите путь к видеофайлу: ")
+            convert_video_ffmpeg(video_path, output_file)
+        elif choice == '23':
+            audio_path = input("Введите путь к аудиофайлу: ")
+            remove_white_noise(audio_path, output_file)
+        elif choice == '24':
+            video_path = input("Введите путь к видеофайлу: ")
+            factor = float(input("Введите коэффициент ускорения видео (например, 2.0): "))
+            speed_up_video(video_path, output_file, factor)
+        elif choice == '25':
+            video_path = input("Введите путь к видеофайлу: ")
+            factor = float(input("Введите коэффициент замедления видео (например, 0.5): "))
+            slow_down_video(video_path, output_file, factor)
+        elif choice == '26':
+            video_path = input("Введите путь к видеофайлу: ")
+            apply_black_white_effect(video_path, output_file)
+        elif choice == '27':
+            video_path = input("Введите путь к видеофайлу: ")
+            apply_sepia_effect(video_path, output_file)
+        elif choice == '28':
+            video_path = input("Введите путь к видеофайлу: ")
+            radius = int(input("Введите радиус размытия: "))
+            apply_blur_effect(video_path, output_file, radius)
+        elif choice == '29':
+            video_path = input("Введите путь к видеофайлу: ")
+            text = input("Введите текст для добавления: ")
+            position = input("Введите позицию текста (например, 'center'): ")
+            add_text_to_video(video_path, output_file, text, position)
+        elif choice == '30':
+            video_path = input("Введите путь к видеофайлу: ")
+            convert_video_to_gif(video_path, output_file)
+        elif choice == '31':
+            video_path = input("Введите путь к видеофайлу: ")
+            format = input("Введите новый формат видео (например, 'avi'): ")
+            change_video_format(video_path, output_file, format)
+        elif choice == '32':
+            video_path = input("Введите путь к видеофайлу: ")
+            border_size = int(input("Введите размер рамки (в пикселях): "))
+            border_color = input("Введите цвет рамки (например, 'red'): ")
+            add_border_to_video(video_path, output_file, border_size, border_color)
+        elif choice == '33':
+            video_path = input("Введите путь к видеофайлу: ")
+            angle = float(input("Введите угол поворота (в градусах): "))
+            rotate_video(video_path, output_file, angle)
+        elif choice == '34':
+            video_path = input("Введите путь к видеофайлу: ")
+            flip_video_vertically(video_path, output_file)
+        elif choice == '35':
+            video_path = input("Введите путь к видеофайлу: ")
+            subtitle_path = input("Введите путь к файлу субтитров: ")
+            add_subtitles_to_video(video_path, output_file, subtitle_path)
+        elif choice == '36':
+            audio_paths = input("Введите пути к аудиофайлам через запятую: ").split(',')
+            concatenate_audio(audio_paths, output_file)
+        elif choice == '37':
+            audio_path = input("Введите путь к аудиофайлу: ")
+            pitch_factor = float(input("Введите коэффициент изменения высоты тона (например, 1.2): "))
+            change_audio_pitch(audio_path, output_file, pitch_factor)
+        elif choice == '38':
+            audio_path = input("Введите путь к аудиофайлу: ")
+            add_echo_effect(audio_path, output_file)
+        elif choice == '39':
+            video_path = input("Введите путь к видеофайлу: ")
+            credits_text = input("Введите текст титров: ")
+            add_credits_to_video(video_path, output_file, credits_text)
+        elif choice == '40':
+            video_path = input("Введите путь к видеофайлу: ")
+            volume_factor = float(input("Введите коэффициент изменения громкости (например, 1.5): "))
+            change_video_volume(video_path, output_file, volume_factor)
+        elif choice == '41':
+            video_path = input("Введите путь к видеофайлу: ")
+            apply_old_film_effect(video_path, output_file)
+        elif choice == '42':
+            video_paths = input("Введите пути к видеофайлам через запятую: ").split(',')
+            add_transition_between_videos(video_paths, output_file)
+        elif choice == '43':
+            video_path = input("Введите путь к видеофайлу: ")
+            audio_path = input("Введите путь к новому аудиофайлу: ")
+            replace_video_audio(video_path, audio_path, output_file)
+        elif choice == '44':
+            video_path = input("Введите путь к видеофайлу: ")
+            sound_effect_path = input("Введите путь к звуковому эффекту: ")
+            add_sound_effect_to_video(video_path, output_file, sound_effect_path)
+        elif choice == '45':
+            video_path = input("Введите путь к видеофайлу: ")
+            transition_type = input("Введите тип перехода (например, 'fade'): ")
+            add_transition_effect(video_path, output_file, transition_type)
+        elif choice == '46':
+            video_path = input("Введите путь к видеофайлу: ")
+            audio_path = input("Введите путь к аудиофайлу: ")
+            overlay_audio_on_video(video_path, output_file, audio_path)
+        elif choice == '47':
+            audio_path = input("Введите путь к аудиофайлу: ")
+            slowdown_factor = float(input("Введите коэффициент замедления аудио (например, 0.5): "))
+            apply_slowdown_effect_to_audio(audio_path, output_file, slowdown_factor)
+        elif choice == '48':
+            audio_path = input("Введите путь к аудиофайлу: ")
+            speedup_factor = float(input("Введите коэффициент ускорения аудио (например, 2.0): "))
+            apply_speedup_effect_to_audio(audio_path, output_file, speedup_factor)
+        elif choice == '49':
+            audio_path = input("Введите путь к аудиофайлу: ")
+            output_file = input("Введите имя выходного файла: ")
+            music_path = input("Введите путь к музыкальному файлу: ")
+            add_background_music_to_audio(audio_path, output_file, music_path)
+        elif choice == '50':
+            video_path = input("Введите путь к видеофайлу: ")
+            filter_type = input("Введите тип фильтра (например, 'sepia'): ")
+            apply_filter_to_video(video_path, output_file, filter_type)
+        else:
+            print("Неверный выбор, попробуйте снова.")
+
+if __name__ == "__main__":
+    main()
+
+
+if __name__ == "__main__":
+    main()
