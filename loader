@@ -1,7 +1,7 @@
 import pyfiglet
 import os
 
-def main():
+deff main():
     os.system("cls")
     ascii_art = pyfiglet.figlet_format("Loader", font="slant")
     print(ascii_art)
