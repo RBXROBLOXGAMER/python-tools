@@ -1,0 +1,401 @@
+import os
+import requests
+import json
+import asyncio
+import aiohttp
+from tqdm import tqdm
+import time  # для имитации задержки
+# Функция очистки экрана консоли
+def cls():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+# Функция для обработки ответа от сервера
+def handle_response(response):
+    if 'application/json' in response.headers.get('Content-Type', ''):
+        return response.json()
+    else:
+        print(f"Unexpected content type: {response.headers.get('Content-Type')}")
+        return None
+
+# Функция для получения ID пользователя по его имени
+def get_user_id(username):
+    url = "https://users.roblox.com/v1/usernames/users"
+    payload = {"usernames": [username]}
+    response = requests.post(url, json=payload)
+    data = handle_response(response)
+    if data and "data" in data and data["data"]:
+        return data["data"][0]["id"]
+    return None
+
+# Функция для получения отображаемого имени пользователя
+def get_display_name(user_id):
+    url = f"https://users.roblox.com/v1/users/{user_id}"
+    response = requests.get(url)
+    data = handle_response(response)
+    return data.get('displayName', 'Display name not found') if data else 'Profile not found'
+
+# Функция для получения профиля пользователя
+def get_user_profile(user_id):
+    url = f"https://users.roblox.com/v1/users/{user_id}"
+    response = requests.get(url)
+    data = handle_response(response)
+    return data
+
+# Функция для получения списка друзей пользователя
+def get_user_friends(user_id):
+    url = f"https://friends.roblox.com/v1/users/{user_id}/friends"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Функция для получения статуса друга пользователя
+def get_friend_status(user_id1, user_id2):
+    url = f"https://friends.roblox.com/v1/users/{user_id1}/friends/statuses"
+    payload = {"userIds": [user_id2]}
+    response = requests.post(url, json=payload)
+    return handle_response(response)
+
+# Функция для получения деталей игры по ID места
+def get_game_details(place_id):
+    url = f"https://games.roblox.com/v1/games?universeIds={place_id}"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Функция для получения деталей группы по ID
+def get_group_details(group_id):
+    url = f"https://groups.roblox.com/v1/groups/{group_id}"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Функция для получения деталей актива по его ID
+def get_asset_details(asset_id):
+    url = f"https://economy.roblox.com/v1/assets/{asset_id}"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Функция для получения инвентаря пользователя по типу актива
+def get_user_inventory(user_id, asset_type):
+    url = f"https://inventory.roblox.com/v1/users/{user_id}/assets/collectibles?assetType={asset_type}"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Функция для получения баланса Robux пользователя
+def get_robux_balance(user_id):
+    url = f"https://economy.roblox.com/v1/users/{user_id}/currency"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Функция для получения транзакций пользователя по типу
+def get_transactions(user_id, transaction_type):
+    url = f"https://economy.roblox.com/v1/users/{user_id}/transactions?transactionType={transaction_type}"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Функция для получения значков пользователя
+def get_user_badges(user_id):
+    url = f"https://badges.roblox.com/v1/users/{user_id}/badges"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Функция для получения присутствия пользователя
+def get_user_presence(user_id):
+    url = f"https://presence.roblox.com/v1/presence/users"
+    payload = {"userIds": [user_id]}
+    response = requests.post(url, json=payload)
+    return handle_response(response)
+
+# Функция для получения времени последнего онлайна пользователя
+def get_user_last_online(user_id):
+    url = f"https://presence.roblox.com/v1/presence/users"
+    payload = {"userIds": [user_id]}
+    response = requests.post(url, json=payload)
+    data = handle_response(response)
+    if data and "userPresences" in data and user_id in data["userPresences"]:
+        last_online = data["userPresences"][user_id]["lastOnline"]
+        return last_online
+    else:
+        return None
+
+# Функция для получения пропусков игр пользователя
+def get_game_passes(user_id):
+    url = f"https://www.roblox.com/users/{user_id}/game-passes"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Функция для получения последователей пользователя
+def get_user_followers(user_id):
+    url = f"https://friends.roblox.com/v1/users/{user_id}/followers"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Функция для получения подписок пользователя
+def get_user_following(user_id):
+    url = f"https://friends.roblox.com/v1/users/{user_id}/followings"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Функция для получения любимых игр пользователя
+def get_user_favorite_games(user_id):
+    url = f"https://games.roblox.com/v1/users/{user_id}/favorites/games"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Функция для получения групп пользователя
+def get_user_groups(user_id):
+    url = f"https://groups.roblox.com/v1/users/{user_id}/groups/roles"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Функция для получения игр группы
+def get_group_games(group_id):
+    url = f"https://games.roblox.com/v1/groups/{group_id}/games"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Функция для получения количества друзей пользователя
+def get_user_friends_count(user_id):
+    friends = get_user_friends(user_id)
+    return len(friends.get('data', [])) if friends else 0
+
+# Функция для получения даты присоединения пользователя
+def get_user_join_date(user_id):
+    profile = get_user_profile(user_id)
+    return profile.get('created', 'Join date not found') if profile else 'Profile not found'
+
+# Функция для получения URL головной фотографии пользователя
+def get_user_headshot(user_id):
+    url = f"https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds={user_id}&size=150x150&format=Png&isCircular=false"
+    response = requests.get(url)
+    data = handle_response(response)
+    return data['data'][0]['imageUrl'] if data else 'Headshot not found'
+
+# Функция для получения URL аватара пользователя
+def get_user_avatar(user_id):
+    url = f"https://thumbnails.roblox.com/v1/users/avatar?userIds={user_id}&size=150x150&format=Png&isCircular=false"
+    response = requests.get(url)
+    data = handle_response(response)
+    return data['data'][0]['imageUrl'] if data else 'Avatar not found'
+
+# Функция для получения любимых активов пользователя
+def get_user_favorite_assets(user_id):
+    url = f"https://www.roblox.com/users/favorites/list-json?assetTypeId=9&userId={user_id}&page=1&itemsPerPage=10"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Функция для получения элементов инвентаря пользователя
+def get_user_inventory_items(user_id):
+    url = f"https://inventory.roblox.com/v1/users/{user_id}/assets"
+    response = requests.get(url)
+    return handle_response(response)
+
+# Основная функция программы
+def main():
+    while True:
+        cls()
+        print("""
+ ____ ___.__   __  .__                __             __               .__            __      __._____________ 
+|    |   |  |_/  |_|__| _____ _____ _/  |_  ____   _/  |_ ____   ____ |  |   ______ /  \    /  |   \______   |
+|    |   |  |\   __|  |/     \\__  \\   ___/ __ \  \   __/  _ \ /  _ \|  |  /  ___/ \   \/\/   |   ||     ___/
+|    |  /|  |_|  | |  |  Y Y  \/ __ \|  | \  ___/   |  |(  <_> (  <_> |  |__\___ \   \        /|   ||    |    
+|______/ |____|__| |__|__|_|  (____  |__|  \___  >  |__| \____/ \____/|____/____  >   \__/\  / |___||____|    
+                            \/     \/          \/                               \/         \/                               
+""")
+        # mode = input("Enter mode (normal/dev): ").strip().lower()
+        mode = 'dev'
+
+        username = input("Enter the Roblox username: ").strip()
+        user_id = get_user_id(username)
+        if not user_id:
+           print(f"User '{username}' not found.")
+           input("Press Enter to continue...")
+           continue
+
+        print(f"User ID for '{username}' is: {user_id}\n")
+
+        # Display progress bar while fetching user profile
+        print("Fetching user profile...")
+        with tqdm(total=100, desc="Loading User Profile", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}") as pbar:
+            profile = get_user_profile(user_id)
+            pbar.update(100)
+
+        # Check if profile data is received
+        if profile:
+            display_name = profile.get('displayName', 'Display name not found')
+            join_date = profile.get('created', 'Join date not found')
+            last_online = profile.get('lastOnline', 'Last Online not found')
+
+            cls()
+            print(f"User Profile for {username}:")
+            print("==============================")
+            print(f"Name: {username}")
+            print(f"Display Name: {display_name}")
+            print(f"Join Date: {join_date}")
+            print(f"Last Online: {last_online}")
+        else:
+            print(f"Failed to fetch profile for '{username}'.")
+
+        input("\nPress Enter to continue...")
+        
+
+
+        print(f"User ID for '{username}' is: {user_id}\n")
+
+        display_name = get_display_name(user_id)
+        profile = get_user_profile(user_id)
+        friends = get_user_friends(user_id)
+        robux_balance = get_robux_balance(user_id)
+        badges = get_user_badges(user_id)
+        presence = get_user_presence(user_id)
+        game_passes = get_game_passes(user_id)
+        followers = get_user_followers(user_id)
+        following = get_user_following(user_id)
+        favorite_games = get_user_favorite_games(user_id)
+        groups = get_user_groups(user_id)
+        
+
+        with tqdm(total=100, desc="Loading User Profile", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}") as pbar:
+         for _ in range(100):  # 20 итераций для обновления на 5 шагов каждые 0.2 секунды
+            for _ in range(1):
+                pbar.update(1)
+        time.sleep(0.1)
+
+        cls()
+        print(f"Name: {username}")
+        print(f"Display Name: {display_name}")
+        print(f"Date: {profile.get('created', 'Join date not found')}\n")
+
+        print("IsDeleted =", profile.get('isDeleted', 'not found'))
+        print("friendFrequentScore =", profile.get('friendFrequentScore', 'not found'))
+        print("friendFrequentRank =", profile.get('friendFrequentRank', 'not found'))
+        print("hasVerifiedBadge =", profile.get('hasVerifiedBadge', 'not found'))
+        print("Description =", profile.get('description', 'not found'))
+        print("IsBanned =", profile.get('isBanned', 'not found'))
+        print("ExternalAppDisplayName =", profile.get('externalAppDisplayName', 'not found'))
+        print("ID =", profile.get('id', 'not found'))
+        print("DisplayName =", profile.get('displayName', 'not found'))
+
+        print("\nUser Profile:")
+        print(json.dumps(profile, indent=2))
+
+        print("\nFriends List:")
+        print(json.dumps(friends, indent=2))
+
+        print("\nRobux Balance:")
+        print(json.dumps(robux_balance, indent=2))
+
+        print("\nUser Badges:")
+        print(json.dumps(badges, indent=2))
+
+        print("\nUser Presence:")
+        print(json.dumps(presence, indent=2))
+
+        print("\nGame Passes:")
+        print(json.dumps(game_passes, indent=2))
+
+        print("\nFollowers:")
+        print(json.dumps(followers, indent=2))
+
+        print("\nFollowing:")
+        print(json.dumps(following, indent=2))
+
+        print("\nFavorite Games:")
+        print(json.dumps(favorite_games, indent=2))
+
+        print("\nGroups:")
+        print(json.dumps(groups, indent=2))
+        print("\nOther available options:")
+        print("1. Get Friend Status")
+        print("2. Get Game Details")
+        print("3. Get Group Details")
+        print("4. Get Asset Details")
+        print("5. Get User Inventory")
+        print("6. Get User Transactions")
+        print("7. Get Group Games")
+
+        if mode == "dev":
+            print("8. Get User Friends Count")
+            print("9. Get User Join Date")
+            print("10. Get User Headshot")
+            print("11. Get User Avatar")
+            print("12. Get User Favorite Assets")
+            print("13. Get User Inventory Items")
+
+        option = input("Enter the number of the option you want to explore (0 to exit): ").strip()
+
+        if option == '0':
+            break
+        elif option == '1':
+            friend_username = input("Enter the friend's username: ").strip()
+            friend_id = get_user_id(friend_username)
+            if friend_id:
+                status = get_friend_status(user_id, friend_id)
+                print("Friend Status:")
+                print(json.dumps(status, indent=2))
+            else:
+                print(f"Friend '{friend_username}' not found.")
+        elif option == '2':
+            place_id = input("Enter the game place ID: ").strip()
+            details = get_game_details(place_id)
+            print("Game Details:")
+            print(json.dumps(details, indent=2))
+        elif option == '3':
+            group_id = input("Enter the group ID: ").strip()
+            details = get_group_details(group_id)
+            print("Group Details:")
+            print(json.dumps(details, indent=2))
+        elif option == '4':
+            asset_id = input("Enter the asset ID: ").strip()
+            details = get_asset_details(asset_id)
+            print("Asset Details:")
+            print(json.dumps(details, indent=2))
+        elif option == '5':
+            asset_type = input("Enter the asset type (e.g., Hat, Gear): ").strip()
+            inventory = get_user_inventory(user_id, asset_type)
+            if inventory and 'data' in inventory:
+                print("User Inventory:")
+                print(json.dumps(inventory, indent=2))
+            else:
+                print(f"No items of type '{asset_type}' found.")
+        elif option == '6':
+            transaction_type = input("Enter the transaction type (Sale, Purchase, etc.): ").strip()
+            transactions = get_transactions(user_id, transaction_type)
+            if transactions and "errors" in transactions:
+                print(f"Error: {transactions['errors'][0]['message']}")
+            else:
+                print("User Transactions:")
+                print(json.dumps(transactions, indent=2))
+        elif option == '7':
+            group_id = input("Enter the group ID: ").strip()
+            games = get_group_games(group_id)
+            print("Group Games:")
+            print(json.dumps(games, indent=2))
+        elif mode == "dev":
+            if option == '8':
+                friends_count = get_user_friends_count(user_id)
+                print(f"User Friends Count: {friends_count}")
+            elif option == '9':
+                join_date = get_user_join_date(user_id)
+                print(f"User Join Date: {join_date}")
+            elif option == '10':
+                headshot = get_user_headshot(user_id)
+                print(f"User Headshot URL: {headshot}")
+            elif option == '11':
+                avatar = get_user_avatar(user_id)
+                print(f"User Avatar URL: {avatar}")
+            elif option == '12':
+                favorite_assets = get_user_favorite_assets(user_id)
+                print("User Favorite Assets:")
+                print(json.dumps(favorite_assets, indent=2))
+            elif option == '13':
+                inventory_items = get_user_inventory_items(user_id)
+                print("User Inventory Items:")
+                print(json.dumps(inventory_items, indent=2))
+            else:
+                print("Invalid option selected.")
+        else:
+            print("Invalid option selected.")
+
+        input("\nPress Enter to continue...")
+
+if __name__ == "__main__":
+    main()
+
