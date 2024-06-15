@@ -3,7 +3,7 @@ from tkinter import filedialog
 import os
 from moviepy.editor import VideoFileClip
 from pydub import AudioSegment
-
+os.system("cls")
 def open_file_dialog():
     root = tk.Tk()
     root.withdraw()  # скрыть основное окно tkinter
