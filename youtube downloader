@@ -1,0 +1,39 @@
+import subprocess
+import sys
+
+def install_pytube():
+    try:
+        import pytube
+    except ImportError:
+        print("pytube не установлен. Устанавливаю...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pytube"])
+        print("pytube успешно установлен.")
+
+def download_youtube_video(url, resolution='720p'):
+    try:
+        from pytube import YouTube
+        yt = YouTube(url)
+        
+        # Получаем список всех доступных потоков
+        streams = yt.streams.filter(progressive=True, file_extension='mp4')
+        available_resolutions = sorted(set([stream.resolution for stream in streams if stream.resolution]), reverse=True)
+        
+        if not resolution.endswith('p'):
+            resolution += 'p'
+        
+        if resolution not in available_resolutions:
+            print(f"Видео с разрешением {resolution} не найдено. Доступные разрешения: {', '.join(available_resolutions)}")
+            return
+        
+        stream = yt.streams.filter(res=resolution, file_extension='mp4').first()
+        print(f"Скачивается видео в разрешении {resolution}...")
+        stream.download()
+        print(f"Видео скачано в качестве {resolution}.")
+    except Exception as e:
+        print(f"Произошла ошибка: {e}")
+
+if __name__ == "__main__":
+    install_pytube()
+    url = input("Введи URL видео с YouTube: ")
+    resolution = input("Введи разрешение (например, 144p, 360p, 720p, 1080p, 4k, 8k): ")
+    download_youtube_video(url, resolution)
