@@ -27,7 +27,7 @@ def main():
         github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/compression.py"
         run_from_github(github_url)
     elif choice == "4":
-        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/youtube downloader.py"
+        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/youtube%20downloader"
         github_url = ""  # Вставь сюда ссылку на GitHub
         run_from_github(github_url)
     elif choice == "5":
