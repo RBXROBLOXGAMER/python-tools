@@ -1,0 +1,17 @@
+import time
+import requests
+
+def check_internet(url='http://www.google.com/', timeout=1):
+    try:
+        _ = requests.get(url, timeout=timeout)
+        return True
+    except requests.ConnectionError:
+        return False
+
+if not check_internet():
+    print("Нет интернета. Ожидание...")
+
+while not check_internet():
+    time.sleep(0.001)
+
+print("Интернет подключен!")
