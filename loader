@@ -5,7 +5,7 @@ import urllib.request
 
 def main():
     os.system("cls" if os.name == "nt" else "clear")
-    ascii_art = pyfiglet.figlet_format("Loader", font="slant")
+    ascii_art = pyfiglet.figlet_format("Loader 3.0", font="slant")
     print(ascii_art)
 
     print("Выбери опцию:")
@@ -14,6 +14,8 @@ def main():
     print("3. Сжатие файла")
     print("4. Скачать видео с YouTube")
     print("5. Проверка интернета")
+    print("6. Поисковик")
+    
 
     choice = input("Введите номер выбранной опции: ")
 
@@ -28,14 +30,18 @@ def main():
         run_from_github(github_url)
     elif choice == "4":
         github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/youtube%20downloader"
-        github_url = ""  # Вставь сюда ссылку на GitHub
+        
         run_from_github(github_url)
     elif choice == "5":
         github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/Check%20Internet"
-        github_url = ""  # Вставь сюда ссылку на GitHub
+        
+        run_from_github(github_url)
+    elif choice == "6":
+        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/Founder"
+        
         run_from_github(github_url)
     else:
-        print("Некорректный выбор. Пожалуйста, выбери от 1 до 5.")
+        print("Некорректный выбор. Пожалуйста, выбери от 1 до 6.")
 
 def run_from_github(url):
     try:
