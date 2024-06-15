@@ -1,34 +1,43 @@
 import pyfiglet
 import os
+import subprocess
+import urllib.request
 
 def main():
-    os.system("cls")
+    os.system("cls" if os.name == "nt" else "clear")
     ascii_art = pyfiglet.figlet_format("Loader", font="slant")
     print(ascii_art)
 
     print("Выбери опцию:")
     print("1. Video montage")
     print("2. Ultimate WIP Tool (Roblox)")
-
+    print("3. Сжатие файла")
+    print("4. Скачать видео с YouTube")
+    print("5. Проверка интернета")
 
     choice = input("Введите номер выбранной опции: ")
 
     if choice == "1":
-        # Здесь нужно указать ссылку на GitHub для Video montage
-        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/montage?token=GHSAT0AAAAAACTUT4RRPXZUO7GYX5AXQAPAZTMS7DA"
+        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/montage.py"
         run_from_github(github_url)
     elif choice == "2":
-        # Здесь нужно указать ссылку на GitHub для Ultimate WIP Tool (Roblox)
-        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/roblox?token=GHSAT0AAAAAACTUT4RR3BD74YNHMPXRBA4WZTMTAZQ"
-        
+        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/roblox.py"
+        run_from_github(github_url)
+    elif choice == "3":
+        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/compression.py"
+        run_from_github(github_url)
+    elif choice == "4":
+        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/youtube downloader.py"
+        github_url = ""  # Вставь сюда ссылку на GitHub
+        run_from_github(github_url)
+    elif choice == "5":
+        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/compression.py"
+        github_url = ""  # Вставь сюда ссылку на GitHub
         run_from_github(github_url)
     else:
-        print("Некорректный выбор. Пожалуйста, выбери 1 или 2.")
+        print("Некорректный выбор. Пожалуйста, выбери от 1 до 5.")
 
 def run_from_github(url):
-    import urllib.request
-    import subprocess
-
     try:
         response = urllib.request.urlopen(url)
         script_content = response.read().decode('utf-8')
