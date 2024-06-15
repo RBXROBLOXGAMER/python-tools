@@ -50,7 +50,7 @@ def run_from_github(url):
 
 def main():
     install_pytube()
-    
+    os.system("cls")
     url = input("Введи URL видео с YouTube: ")
     resolution = input("Введи разрешение (например, 144p, 360p, 720p, 1080p, 4k, 8k): ")
     
