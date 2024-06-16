@@ -8,7 +8,7 @@ def main():
     print(ascii_art)
 
     print("Выбери опцию:")
-    print("1. Video montage")
+    print("1. Video montage (Alpha)")
     print("2. Ultimate WIP Tool (Roblox)")
     print("3. Сжатие файла")
     print("4. Скачать видео с YouTube (GUI)")
