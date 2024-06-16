@@ -4,7 +4,7 @@ import subprocess
 import urllib.request
 def main():
     os.system("cls" if os.name == "nt" else "clear")
-    ascii_art = pyfiglet.figlet_format("Loader 3.4.1", font="slant")
+    ascii_art = pyfiglet.figlet_format("Loader 3.5", font="slant")
     print(ascii_art)
 
     print("Выбери опцию:")
