@@ -2,8 +2,6 @@ import pyfiglet
 import os
 import subprocess
 import urllib.request
-
-print("auth")
 def main():
     os.system("cls" if os.name == "nt" else "clear")
     ascii_art = pyfiglet.figlet_format("Loader 3.4", font="slant")
