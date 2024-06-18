@@ -1,55 +1,126 @@
+import tkinter as tk
+from tkinter import messagebox, ttk
 import pyfiglet
-import os
 import subprocess
 import urllib.request
+import threading
+
+class LoaderApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Loader 4.0")
+        self.root.configure(background="#2b2b2b")  # Черный фон для корневого окна
+
+        self.style = ttk.Style()
+        self.style.theme_use("clam")  # Используем тему clam (тёмная тема)
+
+        # Настройка стилей для ttk.Notebook
+        self.style.configure("TNotebook", background="#2b2b2b", foreground="#ffffff")
+        self.style.map("TNotebook.Tab", background=[("selected", "#333333")], foreground=[("selected", "#ffffff")])
+        self.style.configure("TFrame", background="#2b2b2b")
+
+        # Настройка стилей для кнопок
+        self.style.configure("Custom.TButton",
+                             background="#2b2b2b",
+                             foreground="#ffffff",
+                             relief=tk.FLAT,
+                             borderwidth=0,
+                             padding=5,
+                             font=("Helvetica", 10))
+        self.style.map("Custom.TButton",
+                       background=[("active", "#4CAF50"), ("!active", "#2b2b2b")],
+                       foreground=[("active", "#000000"), ("!active", "#ffffff")])
+
+        self.notebook = ttk.Notebook(root)
+        self.notebook.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
+
+        self.create_tabs()
+
+        self.ascii_art = pyfiglet.figlet_format("Loader 4.0", font="slant")
+        self.ascii_label = tk.Label(self.root, text=self.ascii_art, font=("Courier", 16), background="#2b2b2b", foreground="#ffffff")
+        self.ascii_label.pack(pady=10)
+
+    def create_tabs(self):
+        options_frame = ttk.Frame(self.notebook)
+        about_frame = ttk.Frame(self.notebook)
+
+        self.notebook.add(options_frame, text="Опции")
+        self.notebook.add(about_frame, text="О программе")
+
+        self.create_options(options_frame)
+        self.create_about(about_frame)
+
+    def create_options(self, frame):
+        for index, (label_text, github_url) in enumerate(self.options, start=1):
+            option_btn = ttk.Button(frame, text=f"{index}. {label_text}", style="Custom.TButton",
+                                    command=lambda url=github_url: self.run_from_github(url))
+            option_btn.pack(pady=5, padx=20, ipadx=10, ipady=5, fill=tk.X)
+            option_btn.bind("<Enter>", lambda event, btn=option_btn: self.on_hover_enter(btn))
+            option_btn.bind("<Leave>", lambda event, btn=option_btn: self.on_hover_leave(btn))
+
+    def create_about(self, frame):
+        about_label = tk.Label(frame, text="Это приложение Loader 4.0. Оно было создано, типо мультитул удобный. Спасибо за скачку", font=("Helvetica", 12), background="#2b2b2b", foreground="#ffffff")
+        about_label.pack(padx=20, pady=20)
+
+    def on_hover_enter(self, button):
+        button.state(["active"])
+
+    def on_hover_leave(self, button):
+        button.state(["!active"])
+
+    def run_from_github(self, url):
+        try:
+            # Плавное исчезновение окна
+            def fade_out():
+                alpha = 1.0
+                while alpha > 0.0:
+                    self.root.attributes("-alpha", alpha)
+                    alpha -= 0.05
+                    self.root.update_idletasks()
+                    self.root.after(20)
+                self.root.destroy()  # Закрыть окно после исчезновения
+
+            threading.Thread(target=fade_out).start()
+
+            response = urllib.request.urlopen(url)
+            script_content = response.read().decode('utf-8')
+
+            def run_script():
+                # Запуск скрипта
+                subprocess.run(['python', '-c', script_content])
+
+                # Анимация появления GUI после выполнения скрипта
+                self.root.deiconify()
+                alpha = 0.0
+                while alpha < 1.0:
+                    self.root.attributes("-alpha", alpha)
+                    alpha += 0.05
+                    self.root.update_idletasks()
+                    self.root.after(20)
+
+            threading.Thread(target=run_script).start()
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Ошибка при выполнении скрипта с GitHub: {e}")
+
+    @property
+    def options(self):
+        return [
+            ("Video montage (Alpha)", "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/montage"),
+            ("Ultimate WIP Tool (Roblox)", "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/roblox"),
+            ("Сжатие файла", "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/compress"),
+            ("Скачать видео с YouTube (GUI)", "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/youtube%20downloader"),
+            ("Проверка интернета", "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/Check%20Internet"),
+            ("Поисковик", "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/Founder"),
+            ("Узнать PID приложения", "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/pid")
+        ]
+
 def main():
-    os.system("cls" if os.name == "nt" else "clear")
-    ascii_art = pyfiglet.figlet_format("Loader 3.5", font="slant")
-    print(ascii_art)
+    root = tk.Tk()
+    root.attributes("-alpha", 1.0)  # Устанавливаем полную прозрачность для начала
+    app = LoaderApp(root)
 
-    print("Выбери опцию:")
-    print("1. Video montage (Alpha)")
-    print("2. Ultimate WIP Tool (Roblox)")
-    print("3. Сжатие файла")
-    print("4. Скачать видео с YouTube (GUI)")
-    print("5. Проверка интернета")
-    print("6. Поисковик")
-
-    choice = input("Введите номер выбранной опции: ")
-
-    if choice == "1":
-        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/montage"
-        run_from_github(github_url)
-    elif choice == "2":
-        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/roblox"
-        run_from_github(github_url)
-    elif choice == "3":
-        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/compress"
-        run_from_github(github_url)
-    elif choice == "4":
-        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/youtube%20downloader"
-
-        run_from_github(github_url)
-    elif choice == "5":
-        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/Check%20Internet"
-
-        run_from_github(github_url)
-    elif choice == "6":
-        github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/Founder"
-
-        run_from_github(github_url)
-    else:
-        print("Некорректный выбор. Пожалуйста, выбери от 1 до 6.")
-
-
-def run_from_github(url):
-    try:
-        response = urllib.request.urlopen(url)
-        script_content = response.read().decode('utf-8')
-        subprocess.run(['python', '-c', script_content])
-    except Exception as e:
-        print(f"Ошибка при выполнении скрипта с GitHub: {e}")
-
+    root.mainloop()
 
 if __name__ == "__main__":
     main()
