@@ -8,7 +8,7 @@ import threading
 class LoaderApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Loader 4.0")
+        self.root.title("Loader 5.0")
         self.root.configure(background="#2b2b2b")  # Черный фон для корневого окна
 
         self.style = ttk.Style()
@@ -36,7 +36,7 @@ class LoaderApp:
 
         self.create_tabs()
 
-        self.ascii_art = pyfiglet.figlet_format("Loader 4.0", font="slant")
+        self.ascii_art = pyfiglet.figlet_format("Loader 5.0", font="slant")
         self.ascii_label = tk.Label(self.root, text=self.ascii_art, font=("Courier", 16), background="#2b2b2b", foreground="#ffffff")
         self.ascii_label.pack(pady=10)
 
@@ -59,7 +59,7 @@ class LoaderApp:
             option_btn.bind("<Leave>", lambda event, btn=option_btn: self.on_hover_leave(btn))
 
     def create_about(self, frame):
-        about_label = tk.Label(frame, text="Это приложение Loader 4.0. Оно было создано, типо мультитул удобный. Спасибо за скачку", font=("Helvetica", 12), background="#2b2b2b", foreground="#ffffff")
+        about_label = tk.Label(frame, text="Это приложение Loader 5.0. Оно было создано, типо мультитул удобный. Спасибо за скачку", font=("Helvetica", 12), background="#2b2b2b", foreground="#ffffff")
         about_label.pack(padx=20, pady=20)
 
     def on_hover_enter(self, button):
@@ -106,7 +106,7 @@ class LoaderApp:
     @property
     def options(self):
         return [
-            ("Video montage (Alpha)", "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/montage"),
+            # ("Video montage (Alpha)", "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/montage"),
             ("Ultimate WIP Tool (Roblox)", "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/roblox"),
             ("Сжатие файла", "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/compress"),
             ("Скачать видео с YouTube (GUI)", "https://raw.githubusercontent.com/RBXROBLOXGAMER/python-tools/main/youtube%20downloader"),
